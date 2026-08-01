@@ -66,11 +66,12 @@ pub fn update(
         cam.angle_x %= TAU;
         cam.angle_y %= TAU;
 
-        let pos = cam.target + Vec3::new(
-            cam.angle_x.sin() * cam.angle_y.cos() * cam.distance,
-            cam.angle_y.sin() * cam.distance,
-            cam.angle_x.cos() * cam.angle_y.cos() * cam.distance,
-        );
+        let pos = cam.target
+            + Vec3::new(
+                cam.angle_x.sin() * cam.angle_y.cos() * cam.distance,
+                cam.angle_y.sin() * cam.distance,
+                cam.angle_x.cos() * cam.angle_y.cos() * cam.distance,
+            );
         *transform = Transform::from_translation(pos).looking_at(cam.target, Vec3::Y);
     }
 }
