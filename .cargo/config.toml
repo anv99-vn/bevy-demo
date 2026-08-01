@@ -1,0 +1,4 @@
+# Faster linking on the MSVC toolchain (rust-lld ships with rustup).
+# Safe to leave here; only used when the active target is x86_64-pc-windows-msvc.
+[target.x86_64-pc-windows-msvc]
+linker = "rust-lld.exe"
