@@ -36,7 +36,10 @@ pub fn login_ui_system(
             ui.add_space(20.0);
 
             if ui.button("Login").clicked() {
-                info!("Login: username={}, password={}", login_data.username, login_data.password);
+                info!(
+                    "Login: username={}, password={}",
+                    login_data.username, login_data.password
+                );
                 next_state.set(GameState::Playing);
             }
         });
