@@ -3,6 +3,7 @@ mod camera;
 mod cube;
 mod hud;
 mod login;
+mod text_input;
 
 use bevy::prelude::*;
 
@@ -34,8 +35,8 @@ pub fn main() {
             Update,
             (
                 login::focus_input_system,
-                login::text_input_system,
-                login::ime_input_system,
+                text_input::text_input_system,
+                text_input::ime_input_system,
                 login::style_input_fields,
                 login::login_button_system,
                 login::style_login_button,
