@@ -70,7 +70,7 @@ const REPEAT_RATE: f32 = 0.05;
 /// Multiplier applied to `Time::delta_secs()` while a key is held, so repeats
 /// fire faster than wall-clock time (effectively a "fast-forward" for the
 /// held-key repeat timer).
-const REPEAT_TIME_SCALE: f32 = 2.0;
+const REPEAT_TIME_SCALE: f32 = 5.0;
 
 pub fn setup(mut commands: Commands) {
     commands.insert_resource(InputFocus::default());
