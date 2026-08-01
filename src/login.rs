@@ -1,4 +1,4 @@
-﻿use bevy::input::keyboard::KeyCode;
+use bevy::input::keyboard::KeyCode;
 use bevy::prelude::*;
 use bevy::window::Ime;
 
@@ -306,6 +306,7 @@ fn key_to_char(key: &KeyCode) -> Option<char> {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn text_input_system(
     keys: Res<ButtonInput<KeyCode>>,
     ime_state: Res<ImeState>,
@@ -352,9 +353,7 @@ pub fn text_input_system(
         }
         changed = true;
         // Restart repeat with the most-recently pressed actionable key.
-        repeat.held = just_pressed
-            .last()
-            .map(|k| (*k, 0.0));
+        repeat.held = just_pressed.last().map(|k| (*k, 0.0));
     }
 
     // Advance the held-key timer; fire repeats after the initial delay and
@@ -362,7 +361,7 @@ pub fn text_input_system(
     if let Some((key, elapsed)) = repeat.held.as_mut() {
         if keys.pressed(*key) {
             let prev = *elapsed;
-            *elapsed += time.delta_seconds();
+            *elapsed += time.delta_secs();
 
             let mut fired = false;
             // Detect the transition across the initial delay boundary.
