@@ -5,6 +5,7 @@ mod hud;
 mod login;
 
 use bevy::prelude::*;
+use bevy_egui::EguiPlugin;
 
 #[derive(States, Debug, Clone, Copy, Eq, PartialEq, Hash, Default)]
 pub enum GameState {
@@ -25,21 +26,13 @@ pub fn main() {
             }),
             ..default()
         }))
+        .add_plugins(EguiPlugin)
         .init_state::<GameState>()
         // Login scene
         .add_systems(OnEnter(GameState::Login), login::setup)
-        .add_systems(OnExit(GameState::Login), login::despawn_login_screen)
         .add_systems(
             Update,
-            (
-                login::focus_input_system,
-                login::text_input_system,
-                login::style_input_fields,
-                login::login_button_system,
-                login::style_login_button,
-                login::log_input_keys,
-            )
-                .run_if(in_state(GameState::Login)),
+            login::login_ui_system.run_if(in_state(GameState::Login)),
         )
         // Game scene
         .add_systems(
