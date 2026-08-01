@@ -46,6 +46,10 @@ jobs:
         with:
           tool: cargo-xwin
 
+      - name: Install llvm-tools for llvm-lib
+        if: matrix.target == 'x86_64-pc-windows-msvc'
+        run: rustup component add llvm-tools
+
       - name: Cache cargo-xwin SDK
         if: matrix.target == 'x86_64-pc-windows-msvc'
         uses: actions/cache@v4
