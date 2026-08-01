@@ -42,11 +42,11 @@ pub fn update(
     mut settings: ResMut<CameraSettings>,
 ) {
     if keys.just_pressed(KeyCode::Equal) {
-        settings.sensitivity = (settings.sensitivity + 0.005).min(0.1);
+        settings.sensitivity = (settings.sensitivity + 0.001).min(0.1);
         println!("Mouse sensitivity: {:.3}", settings.sensitivity);
     }
     if keys.just_pressed(KeyCode::Minus) {
-        settings.sensitivity = (settings.sensitivity - 0.005).max(0.001);
+        settings.sensitivity = (settings.sensitivity - 0.001).max(0.001);
         println!("Mouse sensitivity: {:.3}", settings.sensitivity);
     }
 

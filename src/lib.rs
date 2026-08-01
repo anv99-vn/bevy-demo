@@ -1,5 +1,6 @@
 mod camera;
 mod cube;
+mod hud;
 
 use bevy::prelude::*;
 
@@ -15,8 +16,8 @@ pub fn main() {
             }),
             ..default()
         }))
-        .add_systems(Startup, (cube::setup, camera::setup))
-        .add_systems(Update, (cube::rotate, camera::update))
+        .add_systems(Startup, (cube::setup, camera::setup, hud::setup))
+        .add_systems(Update, (cube::rotate, camera::update, hud::update))
         .init_resource::<camera::CameraSettings>()
         .run();
 }
