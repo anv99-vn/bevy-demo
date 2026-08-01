@@ -7,6 +7,8 @@
 - Cross-compile Windows build with cargo-xwin and check on Windows in CI.
 - Check on a single OS in CI.
 - Add watch mode to the fix-ci skill.
+- Add tag push and CI/CD check rules to AGENTS.md.
+- Install llvm-tools so cargo-xwin can find llvm-lib.
 
 ## v0.1.1 - 2026-08-01
 
