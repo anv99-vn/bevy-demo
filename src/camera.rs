@@ -38,6 +38,12 @@ pub fn setup(mut commands: Commands) {
     ));
 }
 
+pub fn despawn(mut commands: Commands, query: Query<Entity, With<OrbitCamera>>) {
+    for entity in &query {
+        commands.entity(entity).despawn();
+    }
+}
+
 pub fn update(
     mut q: Query<(&mut Transform, &mut OrbitCamera)>,
     ui: Query<&Interaction, With<BlocksCameraRotation>>,

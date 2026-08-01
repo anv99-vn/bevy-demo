@@ -10,6 +10,9 @@ const BUTTON_BORDER: Color = Color::srgb(0.7, 0.85, 1.0);
 #[derive(Component)]
 pub struct SettingsButton;
 
+#[derive(Component)]
+pub struct LogoutButton;
+
 pub fn spawn(parent: &mut ChildBuilder) {
     parent
         .spawn((
@@ -33,8 +36,34 @@ pub fn spawn(parent: &mut ChildBuilder) {
         });
 }
 
+pub fn spawn_logout(parent: &mut ChildBuilder) {
+    parent
+        .spawn((
+            Node {
+                width: Val::Px(110.0),
+                height: Val::Px(34.0),
+                padding: UiRect::axes(Val::Px(16.0), Val::Px(6.0)),
+                border: UiRect::all(Val::Px(2.0)),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            BorderColor(BUTTON_BORDER),
+            BackgroundColor(BUTTON_BG),
+            Interaction::default(),
+            BlocksCameraRotation,
+            LogoutButton,
+        ))
+        .with_children(|parent| {
+            parent.spawn((Text::new("Logout"), TextColor(Color::WHITE)));
+        });
+}
+
 pub fn style_button(
-    mut q: Query<(&Interaction, &mut BackgroundColor, &mut BorderColor), With<SettingsButton>>,
+    mut q: Query<
+        (&Interaction, &mut BackgroundColor, &mut BorderColor),
+        Or<(With<SettingsButton>, With<LogoutButton>)>,
+    >,
 ) {
     for (interaction, mut bg, mut border) in &mut q {
         match *interaction {

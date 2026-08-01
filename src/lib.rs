@@ -48,11 +48,16 @@ pub fn main() {
             (cube::setup, camera::setup, hud::setup),
         )
         .add_systems(
+            OnExit(GameState::Playing),
+            (cube::despawn, camera::despawn, hud::despawn),
+        )
+        .add_systems(
             Update,
             (
                 cube::rotate,
                 camera::update,
                 hud::update,
+                hud::logout_button_system,
                 button::style_button,
             )
                 .run_if(in_state(GameState::Playing)),

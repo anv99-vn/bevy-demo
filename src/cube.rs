@@ -3,6 +3,9 @@ use bevy::prelude::*;
 #[derive(Component)]
 pub struct Rotator;
 
+#[derive(Component)]
+pub struct GameWorld;
+
 pub fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -16,6 +19,7 @@ pub fn setup(
         })),
         Transform::default(),
         Rotator,
+        GameWorld,
     ));
 
     commands.spawn((
@@ -25,6 +29,7 @@ pub fn setup(
             ..default()
         })),
         Transform::from_xyz(0.0, -2.0, 0.0),
+        GameWorld,
     ));
 
     commands.spawn((
@@ -34,7 +39,14 @@ pub fn setup(
             ..default()
         },
         Transform::from_xyz(4.0, 8.0, 4.0),
+        GameWorld,
     ));
+}
+
+pub fn despawn(mut commands: Commands, query: Query<Entity, With<GameWorld>>) {
+    for entity in &query {
+        commands.entity(entity).despawn();
+    }
 }
 
 pub fn rotate(time: Res<Time>, mut query: Query<&mut Transform, With<Rotator>>) {

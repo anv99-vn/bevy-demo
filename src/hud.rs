@@ -1,8 +1,9 @@
 use bevy::prelude::*;
 use bevy::ui::RelativeCursorPosition;
 
-use crate::button::{self, SettingsButton};
+use crate::button::{self, LogoutButton, SettingsButton};
 use crate::camera::{BlocksCameraRotation, CameraSettings};
+use crate::GameState;
 
 const MIN_SENSITIVITY: f32 = 0.001;
 const MAX_SENSITIVITY: f32 = 0.1;
@@ -22,22 +23,29 @@ pub struct SensitivityPanel;
 #[derive(Resource, Default)]
 pub struct SettingsVisible(bool);
 
+#[derive(Component)]
+pub struct HudRoot;
+
 pub fn setup(mut commands: Commands, settings: Res<CameraSettings>) {
     let fill = ((settings.sensitivity - MIN_SENSITIVITY) / (MAX_SENSITIVITY - MIN_SENSITIVITY))
         .clamp(0.0, 1.0);
 
     commands
-        .spawn(Node {
-            position_type: PositionType::Absolute,
-            top: Val::Px(10.0),
-            right: Val::Px(10.0),
-            flex_direction: FlexDirection::Column,
-            align_items: AlignItems::FlexEnd,
-            row_gap: Val::Px(4.0),
-            ..default()
-        })
+        .spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                top: Val::Px(10.0),
+                right: Val::Px(10.0),
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::FlexEnd,
+                row_gap: Val::Px(4.0),
+                ..default()
+            },
+            HudRoot,
+        ))
         .with_children(|parent| {
             button::spawn(parent);
+            button::spawn_logout(parent);
             parent
                 .spawn((
                     Node {
@@ -121,5 +129,22 @@ pub fn update(
     }
     for mut text in &mut text_q {
         text.0 = format!("Mouse sensitivity: {:.3}", settings.sensitivity);
+    }
+}
+
+pub fn logout_button_system(
+    interaction_query: Query<&Interaction, (With<LogoutButton>, Changed<Interaction>)>,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    for interaction in &interaction_query {
+        if *interaction == Interaction::Pressed {
+            next_state.set(GameState::Login);
+        }
+    }
+}
+
+pub fn despawn(mut commands: Commands, query: Query<Entity, With<HudRoot>>) {
+    for entity in &query {
+        commands.entity(entity).despawn_recursive();
     }
 }
