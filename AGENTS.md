@@ -23,13 +23,10 @@ Bevy (Rust) 3D demo application: a rotating cube with an orbit camera. Bevy 0.15
 
 ## Conventions
 
+- Never run any `cargo` commands on the local machine (build, run, clippy, check, fmt, clean, etc.). Push changes and let CI perform builds and checks.
 - Modules use `pub fn` systems and `pub struct` components; private fields on components.
 - Add new systems by registering them in `main.rs` (`Startup` for setup, `Update` for per-frame logic).
 - No tests currently defined; verify with `cargo check` after changes.
-- Never run `cargo build` on the local machine; use `cargo check` for verification instead.
-- Don't use cargo at all on the local machine for building/checking; push changes and let CI perform builds and checks.
-- Avoid `cargo clean` when possible; use it only if a rebuild genuinely requires it, and ask the user before running it.
-- Before building or running, run `cargo clippy` and fix all warnings.
 - Use only 4 cores for builds: append `-j 4` to build/run commands.
 - When creating a git tag, update the Changelog file first, then push the tag with `git push origin <tag>`.
 - After pushing a tag, check CI/CD for the tag run and fix any failures before considering the release done.
