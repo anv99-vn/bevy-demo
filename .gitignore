@@ -1,5 +1,8 @@
 /target
 
+# opencode project-local dependencies
+/.opencode/node_modules/
+
 # Android build outputs
 /android/.gradle/
 /android/build/
