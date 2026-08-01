@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.5.0 - 2026-08-01
+
+- Rename release workflow and add platform names to assets.
+- Skip windows-build job on push, require manual run.
+- Use all cores in CI and ignore Windows executables.
+- Add opencode agent and command ask configs.
+- Build Windows natively and rename lib to bevy_demo_app.
+- Move sensitivity HUD behind a Settings button toggle.
+- Add Windows-only build workflow.
+- Block camera orbit while dragging sensitivity slider.
+
 ## v0.4.1 - 2026-08-01
 
 - Fix cargo-xwin SDK cache misses on tag builds by warming the cache on main.
