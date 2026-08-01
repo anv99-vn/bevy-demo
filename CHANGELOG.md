@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3.0 - 2026-08-01
+
+- Add on-screen mouse sensitivity HUD with finer adjustment.
+
 ## v0.2.0 - 2026-08-01
 
 - Add configurable mouse sensitivity.
