@@ -12,4 +12,5 @@
 /android/app/build/
 /android/local.properties
 /android/app/src/main/jniLibs/
+/android/app/release.keystore
 /.idea
