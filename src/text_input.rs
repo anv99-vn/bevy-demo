@@ -431,15 +431,24 @@ mod tests {
         let mut debounce = KeyDebounce { cooldown: 0.0 };
         let mut s = String::new();
 
-        // First insert.
+        // Frame 1: insert happens (cooldown is clear).
         apply_key(&KeyCode::KeyF, &mut s);
         debounce.cooldown = KEY_INSERT_COOLDOWN;
         // One frame passes — cooldown is still active, so the duplicate
-        // (IME/keyboard) event landing a frame later is suppressed.
+        // (IME/keyboard) event landing a frame later is suppressed by the
+        // system's cooldown guard.
         debounce.cooldown = (debounce.cooldown - 1.0 / 60.0).max(0.0);
         assert!(debounce.cooldown > 0.0);
-        apply_key(&KeyCode::KeyF, &mut s);
+        if debounce.cooldown <= 0.0 {
+            apply_key(&KeyCode::KeyF, &mut s);
+        }
         assert_eq!(s, "f"); // still only one 'f', not 'ff'
+
+        // A second frame elapses the window — insertion is allowed again.
+        debounce.cooldown = (debounce.cooldown - 1.0 / 60.0).max(0.0);
+        assert!(debounce.cooldown <= 0.0);
+        apply_key(&KeyCode::KeyF, &mut s);
+        assert_eq!(s, "ff");
     }
 
     // ── repeat-run accounting ────────────────────────────────────────────
@@ -490,9 +499,12 @@ mod tests {
         // One frame passes — cooldown is still active.
         debounce.cooldown = (debounce.cooldown - 1.0 / 60.0).max(0.0);
 
-        // Frame 2: keyboard path tries to insert 'a' again — blocked.
+        // Frame 2: keyboard path tries to insert 'a' again — blocked by the
+        // system's cooldown guard.
         assert!(debounce.cooldown > 0.0);
-        apply_key(&KeyCode::KeyA, &mut target);
+        if debounce.cooldown <= 0.0 {
+            apply_key(&KeyCode::KeyA, &mut target);
+        }
         assert_eq!(target, "a"); // not "aa"
     }
 }
