@@ -365,7 +365,16 @@ pub fn text_input_system(
     if let Some((key, elapsed)) = repeat.held.as_mut() {
         if keys.pressed(*key) {
             let prev = *elapsed;
-            *elapsed += time.delta_secs() * REPEAT_TIME_SCALE;
+            // Use real time while waiting for the initial delay, so a short
+            // tap never accidentally crosses into repeat territory. Once the
+            // initial delay has elapsed, switch to scaled time for fast
+            // steady-state repeats only.
+            let dt = if prev < REPEAT_INITIAL_DELAY {
+                time.delta_secs()
+            } else {
+                time.delta_secs() * REPEAT_TIME_SCALE
+            };
+            *elapsed += dt;
 
             let mut fired = false;
             // Detect the transition across the initial delay boundary.
