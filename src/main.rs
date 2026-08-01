@@ -1,3 +1,3 @@
 fn main() {
-    bevy_demo::main();
+    bevy_demo_app::main();
 }

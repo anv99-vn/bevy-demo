@@ -1,13 +1,7 @@
 name: windows-build
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
-
-concurrency:
-  group: windows-build
-  cancel-in-progress: true
 
 jobs:
   build:

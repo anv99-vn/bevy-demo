@@ -6,10 +6,6 @@ on:
       - "v*"
   workflow_dispatch:
 
-concurrency:
-  group: build
-  cancel-in-progress: true
-
 jobs:
   build:
     strategy:
@@ -19,7 +15,7 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             artifact: bevy-demo-linux
-          - os: ubuntu-latest
+          - os: windows-latest
             target: x86_64-pc-windows-msvc
             artifact: bevy-demo-windows
 
@@ -40,32 +36,8 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - name: Install cargo-xwin
-        if: matrix.target == 'x86_64-pc-windows-msvc'
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-xwin
-
-      - name: Install llvm-tools for llvm-lib
-        if: matrix.target == 'x86_64-pc-windows-msvc'
-        run: rustup component add llvm-tools
-
-      - name: Cache cargo-xwin SDK
-        if: matrix.target == 'x86_64-pc-windows-msvc'
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/cargo-xwin
-          key: cargo-xwin-${{ runner.os }}
-          restore-keys: |
-            cargo-xwin-${{ runner.os }}
-
       - name: Build release binary
-        run: |
-          if [[ "${{ matrix.target }}" == "x86_64-pc-windows-msvc" ]]; then
-            cargo xwin build --release --target "${{ matrix.target }}" -j 4
-          else
-            cargo build --release --target "${{ matrix.target }}" -j 4
-          fi
+        run: cargo build --release --target ${{ matrix.target }} -j 4
 
       - name: Upload binary
         uses: actions/upload-artifact@v4
