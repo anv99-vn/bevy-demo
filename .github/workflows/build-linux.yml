@@ -1,0 +1,36 @@
+name: build-linux
+
+on:
+  workflow_call:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libudev-dev pkg-config
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-gnu
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build release binary
+        run: cargo build --release --target x86_64-unknown-linux-gnu
+
+      - name: Rename binary
+        run: mv target/x86_64-unknown-linux-gnu/release/bevy-demo target/x86_64-unknown-linux-gnu/release/bevy-demo-linux
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: bevy-demo-linux
+          path: target/x86_64-unknown-linux-gnu/release/bevy-demo-linux
+          if-no-files-found: error
