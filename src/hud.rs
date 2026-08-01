@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::ui::RelativeCursorPosition;
 
-use crate::camera::CameraSettings;
+use crate::camera::{BlocksCameraRotation, CameraSettings};
 
 const MIN_SENSITIVITY: f32 = 0.001;
 const MAX_SENSITIVITY: f32 = 0.1;
@@ -44,6 +44,7 @@ pub fn setup(mut commands: Commands, settings: Res<CameraSettings>) {
                     Interaction::default(),
                     RelativeCursorPosition::default(),
                     SensitivitySlider,
+                    BlocksCameraRotation,
                 ))
                 .with_children(|parent| {
                     parent.spawn((

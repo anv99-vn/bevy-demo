@@ -20,6 +20,9 @@ pub struct OrbitCamera {
     target: Vec3,
 }
 
+#[derive(Component)]
+pub struct BlocksCameraRotation;
+
 pub fn setup(mut commands: Commands) {
     commands.spawn((
         Camera3d::default(),
@@ -35,23 +38,27 @@ pub fn setup(mut commands: Commands) {
 
 pub fn update(
     mut q: Query<(&mut Transform, &mut OrbitCamera)>,
+    ui: Query<&Interaction, With<BlocksCameraRotation>>,
     mouse: Res<ButtonInput<MouseButton>>,
     mut scroll: EventReader<MouseWheel>,
     mut motion: EventReader<MouseMotion>,
     settings: Res<CameraSettings>,
 ) {
     let sens = settings.sensitivity;
+    let over_ui = ui.iter().any(|i| *i == Interaction::Pressed);
     for (mut transform, mut cam) in &mut q {
         let drag = mouse.pressed(MouseButton::Left);
         for ev in motion.read() {
-            if drag {
+            if drag && !over_ui {
                 cam.yaw -= ev.delta.x * sens;
                 cam.pitch = (cam.pitch - ev.delta.y * sens).clamp(-1.4, 1.4);
             }
         }
 
         for ev in scroll.read() {
-            cam.distance = (cam.distance - ev.y * 0.5).clamp(2.0, 30.0);
+            if !over_ui {
+                cam.distance = (cam.distance - ev.y * 0.5).clamp(2.0, 30.0);
+            }
         }
 
         let rot = Quat::from_euler(EulerRot::YXZ, cam.yaw, -cam.pitch, 0.0);
