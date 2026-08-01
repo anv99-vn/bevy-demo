@@ -191,6 +191,49 @@ pub fn focus_input_system(
     }
 }
 
+fn key_to_char(key: &KeyCode) -> Option<char> {
+    match key {
+        KeyCode::KeyA => Some('a'),
+        KeyCode::KeyB => Some('b'),
+        KeyCode::KeyC => Some('c'),
+        KeyCode::KeyD => Some('d'),
+        KeyCode::KeyE => Some('e'),
+        KeyCode::KeyF => Some('f'),
+        KeyCode::KeyG => Some('g'),
+        KeyCode::KeyH => Some('h'),
+        KeyCode::KeyI => Some('i'),
+        KeyCode::KeyJ => Some('j'),
+        KeyCode::KeyK => Some('k'),
+        KeyCode::KeyL => Some('l'),
+        KeyCode::KeyM => Some('m'),
+        KeyCode::KeyN => Some('n'),
+        KeyCode::KeyO => Some('o'),
+        KeyCode::KeyP => Some('p'),
+        KeyCode::KeyQ => Some('q'),
+        KeyCode::KeyR => Some('r'),
+        KeyCode::KeyS => Some('s'),
+        KeyCode::KeyT => Some('t'),
+        KeyCode::KeyU => Some('u'),
+        KeyCode::KeyV => Some('v'),
+        KeyCode::KeyW => Some('w'),
+        KeyCode::KeyX => Some('x'),
+        KeyCode::KeyY => Some('y'),
+        KeyCode::KeyZ => Some('z'),
+        KeyCode::Digit0 => Some('0'),
+        KeyCode::Digit1 => Some('1'),
+        KeyCode::Digit2 => Some('2'),
+        KeyCode::Digit3 => Some('3'),
+        KeyCode::Digit4 => Some('4'),
+        KeyCode::Digit5 => Some('5'),
+        KeyCode::Digit6 => Some('6'),
+        KeyCode::Digit7 => Some('7'),
+        KeyCode::Digit8 => Some('8'),
+        KeyCode::Digit9 => Some('9'),
+        KeyCode::Space => Some(' '),
+        _ => None,
+    }
+}
+
 pub fn text_input_system(
     keys: Res<ButtonInput<KeyCode>>,
     mut values: ResMut<InputValues>,
@@ -213,118 +256,11 @@ pub fn text_input_system(
             KeyCode::Backspace => {
                 target.pop();
             }
-            KeyCode::KeyA => {
-                target.push('a');
+            key => {
+                if let Some(c) = key_to_char(key) {
+                    target.push(c);
+                }
             }
-            KeyCode::KeyB => {
-                target.push('b');
-            }
-            KeyCode::KeyC => {
-                target.push('c');
-            }
-            KeyCode::KeyD => {
-                target.push('d');
-            }
-            KeyCode::KeyE => {
-                target.push('e');
-            }
-            KeyCode::KeyF => {
-                target.push('f');
-            }
-            KeyCode::KeyG => {
-                target.push('g');
-            }
-            KeyCode::KeyH => {
-                target.push('h');
-            }
-            KeyCode::KeyI => {
-                target.push('i');
-            }
-            KeyCode::KeyJ => {
-                target.push('j');
-            }
-            KeyCode::KeyK => {
-                target.push('k');
-            }
-            KeyCode::KeyL => {
-                target.push('l');
-            }
-            KeyCode::KeyM => {
-                target.push('m');
-            }
-            KeyCode::KeyN => {
-                target.push('n');
-            }
-            KeyCode::KeyO => {
-                target.push('o');
-            }
-            KeyCode::KeyP => {
-                target.push('p');
-            }
-            KeyCode::KeyQ => {
-                target.push('q');
-            }
-            KeyCode::KeyR => {
-                target.push('r');
-            }
-            KeyCode::KeyS => {
-                target.push('s');
-            }
-            KeyCode::KeyT => {
-                target.push('t');
-            }
-            KeyCode::KeyU => {
-                target.push('u');
-            }
-            KeyCode::KeyV => {
-                target.push('v');
-            }
-            KeyCode::KeyW => {
-                target.push('w');
-            }
-            KeyCode::KeyX => {
-                target.push('x');
-            }
-            KeyCode::KeyY => {
-                target.push('y');
-            }
-            KeyCode::KeyZ => {
-                target.push('z');
-            }
-            KeyCode::Digit0 => {
-                target.push('0');
-            }
-            KeyCode::Digit1 => {
-                target.push('1');
-            }
-            KeyCode::Digit2 => {
-                target.push('2');
-            }
-            KeyCode::Digit3 => {
-                target.push('3');
-            }
-            KeyCode::Digit4 => {
-                target.push('4');
-            }
-            KeyCode::Digit5 => {
-                target.push('5');
-            }
-            KeyCode::Digit6 => {
-                target.push('6');
-            }
-            KeyCode::Digit7 => {
-                target.push('7');
-            }
-            KeyCode::Digit8 => {
-                target.push('8');
-            }
-            KeyCode::Digit9 => {
-                target.push('9');
-            }
-            KeyCode::Space => {
-                target.push(' ');
-            }
-            _ => {}
         }
     }
 
