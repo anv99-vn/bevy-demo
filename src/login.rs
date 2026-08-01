@@ -632,10 +632,8 @@ mod tests {
         assert!(debounce.cooldown <= 0.0);
         // Insertion should be allowed.
         let mut s = String::new();
-        if debounce.cooldown <= 0.0 {
-            apply_key(&KeyCode::KeyA, &mut s);
-            debounce.cooldown = 1.0 / 60.0;
-        }
+        apply_key(&KeyCode::KeyA, &mut s);
+        debounce.cooldown = 1.0 / 60.0;
         assert_eq!(s, "a");
         assert!(debounce.cooldown > 0.0);
     }
@@ -645,16 +643,13 @@ mod tests {
         let mut debounce = KeyDebounce { cooldown: 0.0 };
         let mut s = String::new();
 
-        // First insert — allowed.
-        if debounce.cooldown <= 0.0 {
-            apply_key(&KeyCode::KeyF, &mut s);
-            debounce.cooldown = 1.0 / 60.0;
-        }
+        // First insert — allowed (cooldown is 0).
+        assert!(debounce.cooldown <= 0.0);
+        apply_key(&KeyCode::KeyF, &mut s);
+        debounce.cooldown = 1.0 / 60.0;
+
         // Second insert immediately — blocked by cooldown.
-        if debounce.cooldown <= 0.0 {
-            apply_key(&KeyCode::KeyF, &mut s);
-            debounce.cooldown = 1.0 / 60.0;
-        }
+        assert!(debounce.cooldown > 0.0);
         assert_eq!(s, "f"); // only one 'f', not 'ff'
     }
 
@@ -664,17 +659,13 @@ mod tests {
         let mut s = String::new();
 
         // First insert.
-        if debounce.cooldown <= 0.0 {
-            apply_key(&KeyCode::KeyF, &mut s);
-            debounce.cooldown = 1.0 / 60.0;
-        }
+        apply_key(&KeyCode::KeyF, &mut s);
+        debounce.cooldown = 1.0 / 60.0;
         // Simulate frame passing.
         debounce.cooldown = (debounce.cooldown - 1.0 / 60.0).max(0.0);
         // Second insert — allowed.
-        if debounce.cooldown <= 0.0 {
-            apply_key(&KeyCode::KeyF, &mut s);
-            debounce.cooldown = 1.0 / 60.0;
-        }
+        assert!(debounce.cooldown <= 0.0);
+        apply_key(&KeyCode::KeyF, &mut s);
         assert_eq!(s, "ff");
     }
 
@@ -686,16 +677,13 @@ mod tests {
         let mut target = String::new();
 
         // Simulate Ime::Commit arriving first.
-        if debounce.cooldown <= 0.0 {
-            target.push_str("a");
-            debounce.cooldown = 1.0 / 60.0;
-        }
+        assert!(debounce.cooldown <= 0.0);
+        target.push('a');
+        debounce.cooldown = 1.0 / 60.0;
+
         // Simulate text_input_system also trying to insert 'a' on the same
         // frame — blocked by cooldown.
-        if debounce.cooldown <= 0.0 {
-            apply_key(&KeyCode::KeyA, &mut target);
-            debounce.cooldown = 1.0 / 60.0;
-        }
+        assert!(debounce.cooldown > 0.0);
         assert_eq!(target, "a"); // not "aa"
     }
 
@@ -705,18 +693,15 @@ mod tests {
         let mut target = String::new();
 
         // Frame 1: IME inserts 'a'.
-        if debounce.cooldown <= 0.0 {
-            target.push_str("a");
-            debounce.cooldown = 1.0 / 60.0;
-        }
+        assert!(debounce.cooldown <= 0.0);
+        target.push('a');
+        debounce.cooldown = 1.0 / 60.0;
         // Frame passes.
         debounce.cooldown = (debounce.cooldown - 1.0 / 60.0).max(0.0);
 
         // Frame 2: text_input inserts 'b'.
-        if debounce.cooldown <= 0.0 {
-            apply_key(&KeyCode::KeyB, &mut target);
-            debounce.cooldown = 1.0 / 60.0;
-        }
+        assert!(debounce.cooldown <= 0.0);
+        apply_key(&KeyCode::KeyB, &mut target);
         assert_eq!(target, "ab");
     }
 }
