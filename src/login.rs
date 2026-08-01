@@ -208,7 +208,7 @@ pub fn text_input_system(
         &mut values.password
     };
 
-    for key in keys.get_pressed() {
+    for key in keys.get_just_pressed() {
         match key {
             KeyCode::Backspace => {
                 target.pop();
