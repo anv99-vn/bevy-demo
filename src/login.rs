@@ -53,6 +53,18 @@ pub(crate) struct ImeState {
     pub composing: bool,
 }
 
+/// Cooldown timer shared between `ime_input_system` and `text_input_system`
+/// to prevent duplicate character insertion. When `ime_enabled: true`, Bevy
+/// sends both an `Ime::Commit` event and a `KeyboardInput` for the same key
+/// press. Without debouncing each letter would be inserted twice.
+#[derive(Resource, Default)]
+pub(crate) struct KeyDebounce {
+    /// Remaining cooldown in seconds. While > 0, character insertion is
+    /// suppressed. Set to `1/60` after every successful insert so that at
+    /// most one character makes it through per frame (~60 chars/sec).
+    pub cooldown: f32,
+}
+
 /// Key-repeat state for held-character / held-backspace input.
 ///
 /// `held` tracks the `KeyCode` currently being repeated together with a timer
@@ -77,6 +89,7 @@ pub fn setup(mut commands: Commands) {
     commands.insert_resource(InputValues::default());
     commands.insert_resource(ImeState::default());
     commands.insert_resource(KeyRepeat::default());
+    commands.insert_resource(KeyDebounce::default());
 
     commands.spawn((Camera2d, LoginCamera));
 
@@ -226,6 +239,7 @@ pub fn ime_input_system(
     mut values: ResMut<InputValues>,
     mut username_q: Query<&mut Text, With<UsernameText>>,
     mut password_q: Query<&mut Text, (With<PasswordText>, Without<UsernameText>)>,
+    mut debounce: ResMut<KeyDebounce>,
 ) {
     if !focus.username && !focus.password {
         events.clear();
@@ -242,7 +256,10 @@ pub fn ime_input_system(
     for event in events.read() {
         match event {
             Ime::Commit { value, .. } => {
-                target.push_str(value);
+                if debounce.cooldown <= 0.0 {
+                    target.push_str(value);
+                    debounce.cooldown = 1.0 / 60.0;
+                }
                 ime_state.composing = false;
                 changed = true;
             }
@@ -320,7 +337,11 @@ pub fn text_input_system(
     mut password_q: Query<&mut Text, (With<PasswordText>, Without<UsernameText>)>,
     time: Res<Time>,
     mut repeat: ResMut<KeyRepeat>,
+    mut debounce: ResMut<KeyDebounce>,
 ) {
+    // Advance the shared debounce cooldown each frame.
+    debounce.cooldown = (debounce.cooldown - time.delta_secs()).max(0.0);
+
     if !focus.username && !focus.password {
         repeat.held = None;
         return;
@@ -351,10 +372,11 @@ pub fn text_input_system(
         .collect();
 
     let mut changed = false;
-    if !just_pressed.is_empty() {
+    if !just_pressed.is_empty() && debounce.cooldown <= 0.0 {
         for key in &just_pressed {
             apply_key(key, target);
         }
+        debounce.cooldown = 1.0 / 60.0;
         changed = true;
         // Restart repeat with the most-recently pressed actionable key.
         repeat.held = just_pressed.last().map(|k| (*k, 0.0));
@@ -378,18 +400,24 @@ pub fn text_input_system(
 
             let mut fired = false;
             // Detect the transition across the initial delay boundary.
-            if prev < REPEAT_INITIAL_DELAY && *elapsed >= REPEAT_INITIAL_DELAY {
+            if prev < REPEAT_INITIAL_DELAY
+                && *elapsed >= REPEAT_INITIAL_DELAY
+                && debounce.cooldown <= 0.0
+            {
                 apply_key(key, target);
+                debounce.cooldown = 1.0 / 60.0;
                 *elapsed -= REPEAT_INITIAL_DELAY;
                 fired = true;
             }
             // After the initial delay, fire one repeat per `REPEAT_RATE`
             // interval that has elapsed during steady state.
-            if *elapsed >= REPEAT_RATE {
+            if *elapsed >= REPEAT_RATE && debounce.cooldown <= 0.0 {
                 let count = (*elapsed / REPEAT_RATE).floor() as i32;
-                for _ in 0..count {
+                let allowed = count.min(1); // cap: at most 1 char per cooldown window
+                for _ in 0..allowed {
                     apply_key(key, target);
                 }
+                debounce.cooldown = 1.0 / 60.0;
                 *elapsed -= count as f32 * REPEAT_RATE;
                 fired = true;
             }
@@ -491,5 +519,204 @@ pub fn style_login_button(
                 *border = BorderColor(BUTTON_BORDER);
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── key_to_char ──────────────────────────────────────────────────────
+
+    #[test]
+    fn key_to_char_letters() {
+        assert_eq!(key_to_char(&KeyCode::KeyA), Some('a'));
+        assert_eq!(key_to_char(&KeyCode::KeyZ), Some('z'));
+    }
+
+    #[test]
+    fn key_to_char_digits() {
+        assert_eq!(key_to_char(&KeyCode::Digit0), Some('0'));
+        assert_eq!(key_to_char(&KeyCode::Digit9), Some('9'));
+    }
+
+    #[test]
+    fn key_to_char_space() {
+        assert_eq!(key_to_char(&KeyCode::Space), Some(' '));
+    }
+
+    #[test]
+    fn key_to_char_unmapped() {
+        assert_eq!(key_to_char(&KeyCode::ShiftLeft), None);
+        assert_eq!(key_to_char(&KeyCode::Enter), None);
+        assert_eq!(key_to_char(&KeyCode::Escape), None);
+    }
+
+    // ── apply_key ────────────────────────────────────────────────────────
+
+    #[test]
+    fn apply_key_backspace_pops() {
+        let mut s = String::from("abc");
+        apply_key(&KeyCode::Backspace, &mut s);
+        assert_eq!(s, "ab");
+    }
+
+    #[test]
+    fn apply_key_backspace_empty_string() {
+        let mut s = String::new();
+        apply_key(&KeyCode::Backspace, &mut s);
+        assert_eq!(s, "");
+    }
+
+    #[test]
+    fn apply_key_char_inserts() {
+        let mut s = String::new();
+        apply_key(&KeyCode::KeyH, &mut s);
+        apply_key(&KeyCode::KeyI, &mut s);
+        assert_eq!(s, "hi");
+    }
+
+    #[test]
+    fn apply_key_space_inserts() {
+        let mut s = String::from("a");
+        apply_key(&KeyCode::Space, &mut s);
+        assert_eq!(s, "a ");
+    }
+
+    #[test]
+    fn apply_key_unmapped_noop() {
+        let mut s = String::from("x");
+        apply_key(&KeyCode::ShiftLeft, &mut s);
+        assert_eq!(s, "x");
+    }
+
+    // ── KeyDebounce cooldown ─────────────────────────────────────────────
+
+    #[test]
+    fn debounce_blocks_when_active() {
+        let mut debounce = KeyDebounce {
+            cooldown: 1.0 / 60.0,
+        };
+        // Simulate: cooldown is active, should block insertion.
+        assert!(debounce.cooldown > 0.0);
+        // Decrement by half a frame — still active.
+        debounce.cooldown = (debounce.cooldown - 0.5 * (1.0 / 60.0)).max(0.0);
+        assert!(debounce.cooldown > 0.0);
+    }
+
+    #[test]
+    fn debounce_expires_after_one_frame() {
+        let mut debounce = KeyDebounce {
+            cooldown: 1.0 / 60.0,
+        };
+        // Simulate one full frame passing.
+        debounce.cooldown = (debounce.cooldown - 1.0 / 60.0).max(0.0);
+        assert_eq!(debounce.cooldown, 0.0);
+    }
+
+    #[test]
+    fn debounce_never_goes_negative() {
+        let mut debounce = KeyDebounce { cooldown: 0.01 };
+        // Decrement by more than the remaining cooldown.
+        debounce.cooldown = (debounce.cooldown - 1.0).max(0.0);
+        assert_eq!(debounce.cooldown, 0.0);
+    }
+
+    #[test]
+    fn debounce_allows_insert_after_expiry() {
+        let mut debounce = KeyDebounce {
+            cooldown: 1.0 / 60.0,
+        };
+        // One frame passes — cooldown expires.
+        debounce.cooldown = (debounce.cooldown - 1.0 / 60.0).max(0.0);
+        assert!(debounce.cooldown <= 0.0);
+        // Insertion should be allowed.
+        let mut s = String::new();
+        if debounce.cooldown <= 0.0 {
+            apply_key(&KeyCode::KeyA, &mut s);
+            debounce.cooldown = 1.0 / 60.0;
+        }
+        assert_eq!(s, "a");
+        assert!(debounce.cooldown > 0.0);
+    }
+
+    #[test]
+    fn debounce_blocks_rapid_double_insert() {
+        let mut debounce = KeyDebounce { cooldown: 0.0 };
+        let mut s = String::new();
+
+        // First insert — allowed.
+        if debounce.cooldown <= 0.0 {
+            apply_key(&KeyCode::KeyF, &mut s);
+            debounce.cooldown = 1.0 / 60.0;
+        }
+        // Second insert immediately — blocked by cooldown.
+        if debounce.cooldown <= 0.0 {
+            apply_key(&KeyCode::KeyF, &mut s);
+            debounce.cooldown = 1.0 / 60.0;
+        }
+        assert_eq!(s, "f"); // only one 'f', not 'ff'
+    }
+
+    #[test]
+    fn debounce_allows_insert_after_frame_passes() {
+        let mut debounce = KeyDebounce { cooldown: 0.0 };
+        let mut s = String::new();
+
+        // First insert.
+        if debounce.cooldown <= 0.0 {
+            apply_key(&KeyCode::KeyF, &mut s);
+            debounce.cooldown = 1.0 / 60.0;
+        }
+        // Simulate frame passing.
+        debounce.cooldown = (debounce.cooldown - 1.0 / 60.0).max(0.0);
+        // Second insert — allowed.
+        if debounce.cooldown <= 0.0 {
+            apply_key(&KeyCode::KeyF, &mut s);
+            debounce.cooldown = 1.0 / 60.0;
+        }
+        assert_eq!(s, "ff");
+    }
+
+    // ── IME + debounce integration (unit-level) ─────────────────────────
+
+    #[test]
+    fn ime_commit_respects_debounce() {
+        let mut debounce = KeyDebounce { cooldown: 0.0 };
+        let mut target = String::new();
+
+        // Simulate Ime::Commit arriving first.
+        if debounce.cooldown <= 0.0 {
+            target.push_str("a");
+            debounce.cooldown = 1.0 / 60.0;
+        }
+        // Simulate text_input_system also trying to insert 'a' on the same
+        // frame — blocked by cooldown.
+        if debounce.cooldown <= 0.0 {
+            apply_key(&KeyCode::KeyA, &mut target);
+            debounce.cooldown = 1.0 / 60.0;
+        }
+        assert_eq!(target, "a"); // not "aa"
+    }
+
+    #[test]
+    fn ime_commit_and_text_input_alternate_frames() {
+        let mut debounce = KeyDebounce { cooldown: 0.0 };
+        let mut target = String::new();
+
+        // Frame 1: IME inserts 'a'.
+        if debounce.cooldown <= 0.0 {
+            target.push_str("a");
+            debounce.cooldown = 1.0 / 60.0;
+        }
+        // Frame passes.
+        debounce.cooldown = (debounce.cooldown - 1.0 / 60.0).max(0.0);
+
+        // Frame 2: text_input inserts 'b'.
+        if debounce.cooldown <= 0.0 {
+            apply_key(&KeyCode::KeyB, &mut target);
+            debounce.cooldown = 1.0 / 60.0;
+        }
+        assert_eq!(target, "ab");
     }
 }
