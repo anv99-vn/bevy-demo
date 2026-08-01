@@ -2,8 +2,16 @@ mod button;
 mod camera;
 mod cube;
 mod hud;
+mod login;
 
 use bevy::prelude::*;
+
+#[derive(States, Debug, Clone, Copy, Eq, PartialEq, Hash, Default)]
+pub enum GameState {
+    #[default]
+    Login,
+    Playing,
+}
 
 // the `bevy_main` proc_macro generates the required boilerplate for Android
 #[bevy_main]
@@ -17,7 +25,23 @@ pub fn main() {
             }),
             ..default()
         }))
-        .add_systems(Startup, (cube::setup, camera::setup, hud::setup))
+        .init_state::<GameState>()
+        // Login scene
+        .add_systems(OnEnter(GameState::Login), login::setup)
+        .add_systems(OnExit(GameState::Login), login::despawn_login_screen)
+        .add_systems(
+            Update,
+            (
+                login::focus_input_system,
+                login::text_input_system,
+                login::style_input_fields,
+                login::login_button_system,
+                login::style_login_button,
+            )
+                .run_if(in_state(GameState::Login)),
+        )
+        // Game scene
+        .add_systems(OnEnter(GameState::Playing), (cube::setup, camera::setup, hud::setup))
         .add_systems(
             Update,
             (
@@ -25,7 +49,8 @@ pub fn main() {
                 camera::update,
                 hud::update,
                 button::style_button,
-            ),
+            )
+                .run_if(in_state(GameState::Playing)),
         )
         .init_resource::<camera::CameraSettings>()
         .init_resource::<hud::SettingsVisible>()
