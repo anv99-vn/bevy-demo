@@ -1,0 +1,32 @@
+name: cache-warm
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: cache-warm
+  cancel-in-progress: true
+
+jobs:
+  cargo-xwin:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Restore cargo-xwin SDK cache
+        id: xwin-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/cargo-xwin
+          key: cargo-xwin-Linux
+
+      - name: Install cargo-xwin
+        if: steps.xwin-cache.outputs.cache-hit != 'true'
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-xwin
+
+      - name: Pre-download Windows SDK
+        if: steps.xwin-cache.outputs.cache-hit != 'true'
+        run: cargo xwin cache xwin

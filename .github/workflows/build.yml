@@ -56,6 +56,8 @@ jobs:
         with:
           path: ~/.cache/cargo-xwin
           key: cargo-xwin-${{ runner.os }}
+          restore-keys: |
+            cargo-xwin-${{ runner.os }}
 
       - name: Build release binary
         run: |
