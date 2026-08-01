@@ -29,3 +29,4 @@ Bevy (Rust) 3D demo application: a rotating cube with an orbit camera. Bevy 0.15
 - Avoid `cargo clean` when possible; use it only if a rebuild genuinely requires it, and ask the user before running it.
 - Before building or running, run `cargo clippy` and fix all warnings.
 - Use only 4 cores for builds: append `-j 4` to build/run commands.
+- When creating a git tag, update the Changelog file first.
