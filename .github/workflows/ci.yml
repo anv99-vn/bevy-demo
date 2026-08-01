@@ -6,6 +6,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ci
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -31,3 +35,6 @@ jobs:
 
       - name: Check
         run: cargo check
+
+      - name: Test
+        run: cargo test -j 4
