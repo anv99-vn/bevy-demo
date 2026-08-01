@@ -28,6 +28,7 @@ pub fn main() {
             ..default()
         }))
         .init_state::<GameState>()
+        .add_systems(Update, text_input::log_key_events)
         // Login scene
         .add_systems(OnEnter(GameState::Login), login::setup)
         .add_systems(OnExit(GameState::Login), login::despawn_login_screen)

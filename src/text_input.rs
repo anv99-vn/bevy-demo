@@ -1,4 +1,6 @@
+use bevy::input::ButtonState;
 use bevy::input::keyboard::KeyCode;
+use bevy::input::keyboard::KeyboardInput;
 use bevy::prelude::*;
 use bevy::window::Ime;
 
@@ -46,6 +48,14 @@ const REPEAT_RATE: f32 = 0.05;
 /// fire faster than wall-clock time (effectively a "fast-forward" for the
 /// held-key repeat timer).
 const REPEAT_TIME_SCALE: f32 = 10.0;
+
+pub fn log_key_events(mut events: EventReader<KeyboardInput>) {
+    for event in events.read() {
+        if event.state == ButtonState::Pressed {
+            info!("key pressed: {:?} ({:?})", event.key_code, event.logical_key);
+        }
+    }
+}
 
 pub fn ime_input_system(
     mut events: EventReader<Ime>,
