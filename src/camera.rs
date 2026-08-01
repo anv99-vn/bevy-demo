@@ -1,6 +1,8 @@
 use bevy::input::mouse::{MouseMotion, MouseWheel};
 use bevy::prelude::*;
 
+const TAU: f32 = std::f32::consts::TAU;
+
 #[derive(Resource)]
 pub struct CameraSettings {
     pub sensitivity: f32,
@@ -14,8 +16,8 @@ impl Default for CameraSettings {
 
 #[derive(Component)]
 pub struct OrbitCamera {
-    yaw: f32,
-    pitch: f32,
+    angle_x: f32,
+    angle_y: f32,
     distance: f32,
     target: Vec3,
 }
@@ -28,8 +30,8 @@ pub fn setup(mut commands: Commands) {
         Camera3d::default(),
         Transform::from_xyz(0.0, 2.5, 6.0).looking_at(Vec3::ZERO, Vec3::Y),
         OrbitCamera {
-            yaw: 0.0,
-            pitch: 0.35,
+            angle_x: 0.0,
+            angle_y: 0.35,
             distance: 6.0,
             target: Vec3::ZERO,
         },
@@ -50,8 +52,8 @@ pub fn update(
         let drag = mouse.pressed(MouseButton::Left);
         for ev in motion.read() {
             if drag && !over_ui {
-                cam.yaw -= ev.delta.x * sens;
-                cam.pitch = (cam.pitch + ev.delta.y * sens).clamp(-1.4, 1.4);
+                cam.angle_x -= ev.delta.x * sens;
+                cam.angle_y -= ev.delta.y * sens;
             }
         }
 
@@ -61,8 +63,14 @@ pub fn update(
             }
         }
 
-        let rot = Quat::from_euler(EulerRot::YXZ, cam.yaw, -cam.pitch, 0.0);
-        let pos = cam.target + rot * Vec3::new(0.0, 0.0, cam.distance);
+        cam.angle_x %= TAU;
+        cam.angle_y %= TAU;
+
+        let pos = cam.target + Vec3::new(
+            cam.angle_x.sin() * cam.angle_y.cos() * cam.distance,
+            cam.angle_y.sin() * cam.distance,
+            cam.angle_x.cos() * cam.angle_y.cos() * cam.distance,
+        );
         *transform = Transform::from_translation(pos).looking_at(cam.target, Vec3::Y);
     }
 }
