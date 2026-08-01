@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.5.1 - 2026-08-02
+
+- Fix Android APK signing in CI build.
+- Add login scene with text input and game state transitions.
+- Replace custom login UI with bevy_egui.
+- Free-orbit camera with spherical coordinates for full 360 rotation.
+- Extract settings button into its own module.
+- Add key input logging.
+
 ## v0.5.0 - 2026-08-01
 
 - Rename release workflow and add platform names to assets.
