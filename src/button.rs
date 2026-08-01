@@ -59,12 +59,18 @@ pub fn spawn_logout(parent: &mut ChildBuilder) {
         });
 }
 
-pub fn style_button(
-    mut q: Query<
-        (&Interaction, &mut BackgroundColor, &mut BorderColor),
-        Or<(With<SettingsButton>, With<LogoutButton>)>,
-    >,
-) {
+type ButtonStyleQuery<'w, 's> = Query<
+    'w,
+    's,
+    (
+        &'static Interaction,
+        &'static mut BackgroundColor,
+        &'static mut BorderColor,
+    ),
+    Or<(With<SettingsButton>, With<LogoutButton>)>,
+>;
+
+pub fn style_button(mut q: ButtonStyleQuery) {
     for (interaction, mut bg, mut border) in &mut q {
         match *interaction {
             Interaction::Pressed => {
