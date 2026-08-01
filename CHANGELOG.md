@@ -2,6 +2,7 @@
 
 ## v0.5.0 - 2026-08-01
 
+- Split release workflow into separate build-linux, build-windows, build-android files.
 - Rename release workflow and add platform names to assets.
 - Skip windows-build job on push, require manual run.
 - Use all cores in CI and ignore Windows executables.
