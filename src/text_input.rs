@@ -22,11 +22,18 @@ pub(crate) struct ImeState {
 /// to prevent duplicate character insertion. When `ime_enabled: true`, Bevy
 /// sends both an `Ime::Commit` event and a `KeyboardInput` for the same key
 /// press. Without debouncing each letter would be inserted twice.
+///
+/// The window is wider than one frame so the duplicate event is still
+/// suppressed when it arrives in a later frame (the two events frequently
+/// straddle a frame boundary). A one-frame window decayed to exactly zero at
+/// the start of the next frame, letting the second event insert again.
+const KEY_INSERT_COOLDOWN: f32 = 1.0 / 30.0;
+
 #[derive(Resource, Default)]
 pub(crate) struct KeyDebounce {
     /// Remaining cooldown in seconds. While > 0, character insertion is
-    /// suppressed. Set to `1/60` after every successful insert so that at
-    /// most one character makes it through per frame (~60 chars/sec).
+    /// suppressed. Set to `KEY_INSERT_COOLDOWN` after every successful insert
+    /// so each key press produces at most one character (~30 chars/sec).
     pub cooldown: f32,
 }
 
@@ -86,7 +93,7 @@ pub fn ime_input_system(
             Ime::Commit { value, .. } => {
                 if debounce.cooldown <= 0.0 {
                     target.push_str(value);
-                    debounce.cooldown = 1.0 / 60.0;
+                    debounce.cooldown = KEY_INSERT_COOLDOWN;
                 }
                 ime_state.composing = false;
                 changed = true;
@@ -204,7 +211,7 @@ pub fn text_input_system(
         for key in &just_pressed {
             apply_key(key, target);
         }
-        debounce.cooldown = 1.0 / 60.0;
+        debounce.cooldown = KEY_INSERT_COOLDOWN;
         changed = true;
         // Restart repeat with the most-recently pressed actionable key.
         repeat.held = just_pressed.last().map(|k| (*k, 0.0));
@@ -233,7 +240,7 @@ pub fn text_input_system(
                 && debounce.cooldown <= 0.0
             {
                 apply_key(key, target);
-                debounce.cooldown = 1.0 / 60.0;
+                debounce.cooldown = KEY_INSERT_COOLDOWN;
                 *elapsed -= REPEAT_INITIAL_DELAY;
                 fired = true;
             }
@@ -245,7 +252,7 @@ pub fn text_input_system(
                 for _ in 0..allowed {
                     apply_key(key, target);
                 }
-                debounce.cooldown = 1.0 / 60.0;
+                debounce.cooldown = KEY_INSERT_COOLDOWN;
                 *elapsed -= count as f32 * REPEAT_RATE;
                 fired = true;
             }
@@ -357,7 +364,7 @@ mod tests {
     #[test]
     fn debounce_blocks_when_active() {
         let mut debounce = KeyDebounce {
-            cooldown: 1.0 / 60.0,
+            cooldown: KEY_INSERT_COOLDOWN,
         };
         // Simulate: cooldown is active, should block insertion.
         assert!(debounce.cooldown > 0.0);
@@ -367,13 +374,16 @@ mod tests {
     }
 
     #[test]
-    fn debounce_expires_after_one_frame() {
+    fn debounce_survives_next_frame() {
         let mut debounce = KeyDebounce {
-            cooldown: 1.0 / 60.0,
+            cooldown: KEY_INSERT_COOLDOWN,
         };
-        // Simulate one full frame passing.
+        // One full frame passes at 60fps — still active.
         debounce.cooldown = (debounce.cooldown - 1.0 / 60.0).max(0.0);
-        assert_eq!(debounce.cooldown, 0.0);
+        assert!(debounce.cooldown > 0.0);
+        // A second frame elapses the full window.
+        debounce.cooldown = (debounce.cooldown - 1.0 / 60.0).max(0.0);
+        assert!(debounce.cooldown <= 0.0);
     }
 
     #[test]
@@ -387,15 +397,16 @@ mod tests {
     #[test]
     fn debounce_allows_insert_after_expiry() {
         let mut debounce = KeyDebounce {
-            cooldown: 1.0 / 60.0,
+            cooldown: KEY_INSERT_COOLDOWN,
         };
-        // One frame passes — cooldown expires.
+        // Two frames pass — cooldown expires.
+        debounce.cooldown = (debounce.cooldown - 1.0 / 60.0).max(0.0);
         debounce.cooldown = (debounce.cooldown - 1.0 / 60.0).max(0.0);
         assert!(debounce.cooldown <= 0.0);
         // Insertion should be allowed.
         let mut s = String::new();
         apply_key(&KeyCode::KeyA, &mut s);
-        debounce.cooldown = 1.0 / 60.0;
+        debounce.cooldown = KEY_INSERT_COOLDOWN;
         assert_eq!(s, "a");
         assert!(debounce.cooldown > 0.0);
     }
@@ -408,7 +419,7 @@ mod tests {
         // First insert — allowed (cooldown is 0).
         assert!(debounce.cooldown <= 0.0);
         apply_key(&KeyCode::KeyF, &mut s);
-        debounce.cooldown = 1.0 / 60.0;
+        debounce.cooldown = KEY_INSERT_COOLDOWN;
 
         // Second insert immediately — blocked by cooldown.
         assert!(debounce.cooldown > 0.0);
@@ -416,19 +427,19 @@ mod tests {
     }
 
     #[test]
-    fn debounce_allows_insert_after_frame_passes() {
+    fn debounce_blocks_insert_one_frame_later() {
         let mut debounce = KeyDebounce { cooldown: 0.0 };
         let mut s = String::new();
 
         // First insert.
         apply_key(&KeyCode::KeyF, &mut s);
-        debounce.cooldown = 1.0 / 60.0;
-        // Simulate frame passing.
+        debounce.cooldown = KEY_INSERT_COOLDOWN;
+        // One frame passes — cooldown is still active, so the duplicate
+        // (IME/keyboard) event landing a frame later is suppressed.
         debounce.cooldown = (debounce.cooldown - 1.0 / 60.0).max(0.0);
-        // Second insert — allowed.
-        assert!(debounce.cooldown <= 0.0);
+        assert!(debounce.cooldown > 0.0);
         apply_key(&KeyCode::KeyF, &mut s);
-        assert_eq!(s, "ff");
+        assert_eq!(s, "f"); // still only one 'f', not 'ff'
     }
 
     // ── repeat-run accounting ────────────────────────────────────────────
@@ -460,7 +471,7 @@ mod tests {
         // Simulate Ime::Commit arriving first.
         assert!(debounce.cooldown <= 0.0);
         target.push('a');
-        debounce.cooldown = 1.0 / 60.0;
+        debounce.cooldown = KEY_INSERT_COOLDOWN;
 
         // Simulate text_input_system also trying to insert 'a' on the same
         // frame — blocked by cooldown.
@@ -469,20 +480,19 @@ mod tests {
     }
 
     #[test]
-    fn ime_commit_and_text_input_alternate_frames() {
+    fn ime_commit_duplicate_next_frame_blocked() {
         let mut debounce = KeyDebounce { cooldown: 0.0 };
         let mut target = String::new();
 
         // Frame 1: IME inserts 'a'.
-        assert!(debounce.cooldown <= 0.0);
         target.push('a');
-        debounce.cooldown = 1.0 / 60.0;
-        // Frame passes.
+        debounce.cooldown = KEY_INSERT_COOLDOWN;
+        // One frame passes — cooldown is still active.
         debounce.cooldown = (debounce.cooldown - 1.0 / 60.0).max(0.0);
 
-        // Frame 2: text_input inserts 'b'.
-        assert!(debounce.cooldown <= 0.0);
-        apply_key(&KeyCode::KeyB, &mut target);
-        assert_eq!(target, "ab");
+        // Frame 2: keyboard path tries to insert 'a' again — blocked.
+        assert!(debounce.cooldown > 0.0);
+        apply_key(&KeyCode::KeyA, &mut target);
+        assert_eq!(target, "a"); // not "aa"
     }
 }
