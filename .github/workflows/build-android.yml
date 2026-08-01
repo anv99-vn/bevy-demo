@@ -3,6 +3,13 @@ name: build-android
 on:
   workflow_call:
 
+env:
+  ANDROID_HOME: /usr/local/lib/android-sdk
+  ANDROID_SDK_VERSION: "34"
+  ANDROID_BUILD_TOOLS: "34.0.0"
+  ANDROID_NDK_VERSION: "26.1.10909125"
+  CARGO_NDK_VERSION: "3.1.2"
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,21 +31,32 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Setup Android SDK
+      - name: Setup Android SDK (base)
         uses: android-actions/setup-android@v4
 
+      - name: Cache Android NDK
+        id: ndk-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.ANDROID_HOME }}/ndk/${{ env.ANDROID_NDK_VERSION }}
+          key: android-ndk-${{ runner.os }}-${{ env.ANDROID_NDK_VERSION }}
+
       - name: Install Android SDK components
-        run: sdkmanager "platforms;android-34" "build-tools;34.0.0" "ndk;26.1.10909125"
+        run: |
+          sdkmanager "platforms;android-${ANDROID_SDK_VERSION}" \
+                     "build-tools;${ANDROID_BUILD_TOOLS}" \
+                     "ndk;${ANDROID_NDK_VERSION}"
+
+      - name: Cache cargo-ndk
+        id: cargo-ndk-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/cargo-ndk
+          key: cargo-ndk-${{ runner.os }}-${{ env.CARGO_NDK_VERSION }}
 
       - name: Install cargo-ndk
-        run: cargo install --locked cargo-ndk
-
-      - name: Build Rust library for Android
-        run: cargo ndk -t arm64-v8a -o android/app/src/main/jniLibs build --release
-
-      - name: Bundle libc++_shared.so
-        run: |
-          cp "$ANDROID_HOME/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so" android/app/src/main/jniLibs/arm64-v8a/
+        if: steps.cargo-ndk-cache.outputs.cache-hit != 'true'
+        run: cargo install --locked --version ${CARGO_NDK_VERSION} cargo-ndk
 
       - name: Generate keystore
         run: |
@@ -47,10 +65,18 @@ jobs:
             -storepass android -keypass android \
             -dname "CN=Android Debug,O=Android,C=US"
 
+      - name: Build Rust library for Android
+        run: cargo ndk -t arm64-v8a -o android/app/src/main/jniLibs build --release
+
+      - name: Bundle libc++_shared.so
+        run: |
+          cp "$ANDROID_HOME/ndk/${ANDROID_NDK_VERSION}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so" android/app/src/main/jniLibs/arm64-v8a/
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.6"
+          cache-overwrite-existing: true
 
       - name: Build APK
         working-directory: android
@@ -59,7 +85,7 @@ jobs:
           KEYSTORE_PASSWORD: android
           KEY_ALIAS: androiddebugkey
           KEY_PASSWORD: android
-        run: gradle assembleRelease
+        run: gradle assembleRelease --parallel --build-cache
 
       - name: Rename APK
         run: mv android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/bevy-demo-android.apk
