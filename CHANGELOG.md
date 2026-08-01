@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.4.0 - 2026-08-01
+
+- Never run `cargo build` on the local machine; use `cargo check` for verification instead.
+
 ## v0.3.0 - 2026-08-01
 
 - Add on-screen mouse sensitivity HUD with finer adjustment.
