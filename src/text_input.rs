@@ -1,6 +1,6 @@
-use bevy::input::ButtonState;
 use bevy::input::keyboard::KeyCode;
 use bevy::input::keyboard::KeyboardInput;
+use bevy::input::ButtonState;
 use bevy::prelude::*;
 use bevy::window::Ime;
 
@@ -52,7 +52,10 @@ const REPEAT_TIME_SCALE: f32 = 10.0;
 pub fn log_key_events(mut events: EventReader<KeyboardInput>) {
     for event in events.read() {
         if event.state == ButtonState::Pressed {
-            info!("key pressed: {:?} ({:?})", event.key_code, event.logical_key);
+            info!(
+                "key pressed: {:?} ({:?})",
+                event.key_code, event.logical_key
+            );
         }
     }
 }
