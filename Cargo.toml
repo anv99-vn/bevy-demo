@@ -3,6 +3,19 @@ name = "bevy-demo"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "bevy_demo"
+path = "src/lib.rs"
+crate-type = [
+    "staticlib",
+    "cdylib", # needed for Android
+    "rlib",   # rlib needed for running locally
+]
+
+[[bin]]
+name = "bevy-demo"
+path = "src/main.rs"
+
 [dependencies]
 bevy = "0.15"
 
