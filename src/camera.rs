@@ -51,7 +51,7 @@ pub fn update(
         for ev in motion.read() {
             if drag && !over_ui {
                 cam.yaw -= ev.delta.x * sens;
-                cam.pitch = (cam.pitch - ev.delta.y * sens).clamp(-1.4, 1.4);
+                cam.pitch = (cam.pitch + ev.delta.y * sens).clamp(-1.4, 1.4);
             }
         }
 
