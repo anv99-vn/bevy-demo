@@ -37,6 +37,7 @@ pub fn main() {
                 login::style_input_fields,
                 login::login_button_system,
                 login::style_login_button,
+                login::log_input_keys,
             )
                 .run_if(in_state(GameState::Login)),
         )

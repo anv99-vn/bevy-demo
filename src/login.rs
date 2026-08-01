@@ -191,6 +191,12 @@ pub fn focus_input_system(
     }
 }
 
+pub fn log_input_keys(keys: Res<ButtonInput<KeyCode>>) {
+    for key in keys.get_just_pressed() {
+        info!("Key pressed: {:?}", key);
+    }
+}
+
 fn key_to_char(key: &KeyCode) -> Option<char> {
     match key {
         KeyCode::KeyA => Some('a'),
