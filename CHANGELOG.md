@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.2.0 - 2026-08-01
+
+- Add configurable mouse sensitivity.
+- Build Android APK in the release workflow.
+- Cross-compile Windows build with cargo-xwin and check on Windows in CI.
+- Check on a single OS in CI.
+- Add watch mode to the fix-ci skill.
+
 ## v0.1.1 - 2026-08-01
 
 - Split CI into check-on-main and build-on-tag workflows.
