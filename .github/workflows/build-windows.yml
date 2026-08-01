@@ -2,8 +2,6 @@ name: build-windows
 
 on:
   workflow_call:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
