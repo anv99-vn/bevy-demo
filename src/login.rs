@@ -53,10 +53,26 @@ pub(crate) struct ImeState {
     pub composing: bool,
 }
 
+/// Key-repeat state for held-character / held-backspace input.
+///
+/// `held` tracks the `KeyCode` currently being repeated together with a timer
+/// that implements an initial delay (OS-style) followed by a faster repeat
+/// rate. Only one key is repeated at a time, mirroring typical text editor
+/// behavior.
+#[derive(Resource, Default)]
+pub(crate) struct KeyRepeat {
+    /// The key currently held down awaiting repeat, and its elapsed hold time.
+    pub held: Option<(KeyCode, f32)>,
+}
+
+const REPEAT_INITIAL_DELAY: f32 = 0.5;
+const REPEAT_RATE: f32 = 0.05;
+
 pub fn setup(mut commands: Commands) {
     commands.insert_resource(InputFocus::default());
     commands.insert_resource(InputValues::default());
     commands.insert_resource(ImeState::default());
+    commands.insert_resource(KeyRepeat::default());
 
     commands.spawn((Camera2d, LoginCamera));
 
@@ -297,14 +313,18 @@ pub fn text_input_system(
     focus: Res<InputFocus>,
     mut username_q: Query<&mut Text, With<UsernameText>>,
     mut password_q: Query<&mut Text, (With<PasswordText>, Without<UsernameText>)>,
+    time: Res<Time>,
+    mut repeat: ResMut<KeyRepeat>,
 ) {
     if !focus.username && !focus.password {
+        repeat.held = None;
         return;
     }
     // While a system IME (Unikey, etc.) is composing text, raw key events are
     // synthetic noise (e.g. `Unidentified` + repeated `Backspace`); let the
     // IME commit be the source of truth via `ime_input_system`.
     if ime_state.composing {
+        repeat.held = None;
         return;
     }
 
@@ -314,19 +334,64 @@ pub fn text_input_system(
         &mut values.password
     };
 
-    for key in keys.get_just_pressed() {
-        match key {
-            KeyCode::Backspace => {
-                target.pop();
+    // Determine the set of "actionable" keys currently relevant: Backspace
+    // (for deletion) plus any mappable character key.
+    let is_actionable = |key: &KeyCode| *key == KeyCode::Backspace || key_to_char(key).is_some();
+
+    // Detect fresh presses this frame -> apply once and seed the repeat timer.
+    let just_pressed: Vec<KeyCode> = keys
+        .get_just_pressed()
+        .copied()
+        .filter(is_actionable)
+        .collect();
+
+    let mut changed = false;
+    if !just_pressed.is_empty() {
+        for key in &just_pressed {
+            apply_key(key, target);
+        }
+        changed = true;
+        // Restart repeat with the most-recently pressed actionable key.
+        repeat.held = just_pressed
+            .last()
+            .map(|k| (*k, 0.0));
+    }
+
+    // Advance the held-key timer; fire repeats after the initial delay and
+    // then at `REPEAT_RATE` intervals while the key stays pressed.
+    if let Some((key, elapsed)) = repeat.held.as_mut() {
+        if keys.pressed(*key) {
+            let prev = *elapsed;
+            *elapsed += time.delta_seconds();
+
+            let mut fired = false;
+            // Detect the transition across the initial delay boundary.
+            if prev < REPEAT_INITIAL_DELAY && *elapsed >= REPEAT_INITIAL_DELAY {
+                apply_key(key, target);
+                *elapsed -= REPEAT_INITIAL_DELAY;
+                fired = true;
             }
-            key => {
-                if let Some(c) = key_to_char(key) {
-                    target.push(c);
+            // After the initial delay, fire one repeat per `REPEAT_RATE`
+            // interval that has elapsed during steady state.
+            if *elapsed >= REPEAT_RATE {
+                let count = (*elapsed / REPEAT_RATE).floor() as i32;
+                for _ in 0..count {
+                    apply_key(key, target);
                 }
+                *elapsed -= count as f32 * REPEAT_RATE;
+                fired = true;
             }
+            if fired {
+                changed = true;
+            }
+        } else {
+            repeat.held = None;
         }
     }
 
+    if !changed {
+        return;
+    }
     if focus.username {
         for mut text in &mut username_q {
             text.0 = values.username.clone();
@@ -334,6 +399,19 @@ pub fn text_input_system(
     } else {
         for mut text in &mut password_q {
             text.0 = values.password.clone();
+        }
+    }
+}
+
+fn apply_key(key: &KeyCode, target: &mut String) {
+    match key {
+        KeyCode::Backspace => {
+            target.pop();
+        }
+        k => {
+            if let Some(c) = key_to_char(k) {
+                target.push(c);
+            }
         }
     }
 }
