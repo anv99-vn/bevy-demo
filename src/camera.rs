@@ -38,18 +38,8 @@ pub fn update(
     mouse: Res<ButtonInput<MouseButton>>,
     mut scroll: EventReader<MouseWheel>,
     mut motion: EventReader<MouseMotion>,
-    keys: Res<ButtonInput<KeyCode>>,
-    mut settings: ResMut<CameraSettings>,
+    settings: Res<CameraSettings>,
 ) {
-    if keys.just_pressed(KeyCode::Equal) {
-        settings.sensitivity = (settings.sensitivity + 0.001).min(0.1);
-        println!("Mouse sensitivity: {:.3}", settings.sensitivity);
-    }
-    if keys.just_pressed(KeyCode::Minus) {
-        settings.sensitivity = (settings.sensitivity - 0.001).max(0.001);
-        println!("Mouse sensitivity: {:.3}", settings.sensitivity);
-    }
-
     let sens = settings.sensitivity;
     for (mut transform, mut cam) in &mut q {
         let drag = mouse.pressed(MouseButton::Left);
