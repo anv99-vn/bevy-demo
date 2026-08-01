@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.4.1 - 2026-08-01
+
+- Fix cargo-xwin SDK cache misses on tag builds by warming the cache on main.
+
 ## v0.4.0 - 2026-08-01
 
 - Never run `cargo build` on the local machine; use `cargo check` for verification instead.
