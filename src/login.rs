@@ -67,6 +67,10 @@ pub(crate) struct KeyRepeat {
 
 const REPEAT_INITIAL_DELAY: f32 = 0.5;
 const REPEAT_RATE: f32 = 0.05;
+/// Multiplier applied to `Time::delta_secs()` while a key is held, so repeats
+/// fire faster than wall-clock time (effectively a "fast-forward" for the
+/// held-key repeat timer).
+const REPEAT_TIME_SCALE: f32 = 2.0;
 
 pub fn setup(mut commands: Commands) {
     commands.insert_resource(InputFocus::default());
@@ -361,7 +365,7 @@ pub fn text_input_system(
     if let Some((key, elapsed)) = repeat.held.as_mut() {
         if keys.pressed(*key) {
             let prev = *elapsed;
-            *elapsed += time.delta_secs();
+            *elapsed += time.delta_secs() * REPEAT_TIME_SCALE;
 
             let mut fired = false;
             // Detect the transition across the initial delay boundary.
