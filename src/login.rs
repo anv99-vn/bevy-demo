@@ -1,8 +1,8 @@
-use bevy::prelude::*;
 use bevy::input::keyboard::KeyCode;
+use bevy::prelude::*;
 
-use crate::GameState;
 use crate::camera::BlocksCameraRotation;
+use crate::GameState;
 
 const BUTTON_BG: Color = Color::srgb(0.2, 0.45, 0.85);
 const BUTTON_HOVER: Color = Color::srgb(0.3, 0.55, 0.95);
@@ -105,11 +105,7 @@ pub fn setup(mut commands: Commands) {
                             UsernameInput,
                         ))
                         .with_children(|parent| {
-                            parent.spawn((
-                                Text::new(""),
-                                TextColor(Color::WHITE),
-                                UsernameText,
-                            ));
+                            parent.spawn((Text::new(""), TextColor(Color::WHITE), UsernameText));
                         });
                 });
 
@@ -142,11 +138,7 @@ pub fn setup(mut commands: Commands) {
                             PasswordInput,
                         ))
                         .with_children(|parent| {
-                            parent.spawn((
-                                Text::new(""),
-                                TextColor(Color::WHITE),
-                                PasswordText,
-                            ));
+                            parent.spawn((Text::new(""), TextColor(Color::WHITE), PasswordText));
                         });
                 });
 
@@ -221,43 +213,117 @@ pub fn text_input_system(
             KeyCode::Backspace => {
                 target.pop();
             }
-            KeyCode::KeyA => { target.push('a'); }
-            KeyCode::KeyB => { target.push('b'); }
-            KeyCode::KeyC => { target.push('c'); }
-            KeyCode::KeyD => { target.push('d'); }
-            KeyCode::KeyE => { target.push('e'); }
-            KeyCode::KeyF => { target.push('f'); }
-            KeyCode::KeyG => { target.push('g'); }
-            KeyCode::KeyH => { target.push('h'); }
-            KeyCode::KeyI => { target.push('i'); }
-            KeyCode::KeyJ => { target.push('j'); }
-            KeyCode::KeyK => { target.push('k'); }
-            KeyCode::KeyL => { target.push('l'); }
-            KeyCode::KeyM => { target.push('m'); }
-            KeyCode::KeyN => { target.push('n'); }
-            KeyCode::KeyO => { target.push('o'); }
-            KeyCode::KeyP => { target.push('p'); }
-            KeyCode::KeyQ => { target.push('q'); }
-            KeyCode::KeyR => { target.push('r'); }
-            KeyCode::KeyS => { target.push('s'); }
-            KeyCode::KeyT => { target.push('t'); }
-            KeyCode::KeyU => { target.push('u'); }
-            KeyCode::KeyV => { target.push('v'); }
-            KeyCode::KeyW => { target.push('w'); }
-            KeyCode::KeyX => { target.push('x'); }
-            KeyCode::KeyY => { target.push('y'); }
-            KeyCode::KeyZ => { target.push('z'); }
-            KeyCode::Digit0 => { target.push('0'); }
-            KeyCode::Digit1 => { target.push('1'); }
-            KeyCode::Digit2 => { target.push('2'); }
-            KeyCode::Digit3 => { target.push('3'); }
-            KeyCode::Digit4 => { target.push('4'); }
-            KeyCode::Digit5 => { target.push('5'); }
-            KeyCode::Digit6 => { target.push('6'); }
-            KeyCode::Digit7 => { target.push('7'); }
-            KeyCode::Digit8 => { target.push('8'); }
-            KeyCode::Digit9 => { target.push('9'); }
-            KeyCode::Space => { target.push(' '); }
+            KeyCode::KeyA => {
+                target.push('a');
+            }
+            KeyCode::KeyB => {
+                target.push('b');
+            }
+            KeyCode::KeyC => {
+                target.push('c');
+            }
+            KeyCode::KeyD => {
+                target.push('d');
+            }
+            KeyCode::KeyE => {
+                target.push('e');
+            }
+            KeyCode::KeyF => {
+                target.push('f');
+            }
+            KeyCode::KeyG => {
+                target.push('g');
+            }
+            KeyCode::KeyH => {
+                target.push('h');
+            }
+            KeyCode::KeyI => {
+                target.push('i');
+            }
+            KeyCode::KeyJ => {
+                target.push('j');
+            }
+            KeyCode::KeyK => {
+                target.push('k');
+            }
+            KeyCode::KeyL => {
+                target.push('l');
+            }
+            KeyCode::KeyM => {
+                target.push('m');
+            }
+            KeyCode::KeyN => {
+                target.push('n');
+            }
+            KeyCode::KeyO => {
+                target.push('o');
+            }
+            KeyCode::KeyP => {
+                target.push('p');
+            }
+            KeyCode::KeyQ => {
+                target.push('q');
+            }
+            KeyCode::KeyR => {
+                target.push('r');
+            }
+            KeyCode::KeyS => {
+                target.push('s');
+            }
+            KeyCode::KeyT => {
+                target.push('t');
+            }
+            KeyCode::KeyU => {
+                target.push('u');
+            }
+            KeyCode::KeyV => {
+                target.push('v');
+            }
+            KeyCode::KeyW => {
+                target.push('w');
+            }
+            KeyCode::KeyX => {
+                target.push('x');
+            }
+            KeyCode::KeyY => {
+                target.push('y');
+            }
+            KeyCode::KeyZ => {
+                target.push('z');
+            }
+            KeyCode::Digit0 => {
+                target.push('0');
+            }
+            KeyCode::Digit1 => {
+                target.push('1');
+            }
+            KeyCode::Digit2 => {
+                target.push('2');
+            }
+            KeyCode::Digit3 => {
+                target.push('3');
+            }
+            KeyCode::Digit4 => {
+                target.push('4');
+            }
+            KeyCode::Digit5 => {
+                target.push('5');
+            }
+            KeyCode::Digit6 => {
+                target.push('6');
+            }
+            KeyCode::Digit7 => {
+                target.push('7');
+            }
+            KeyCode::Digit8 => {
+                target.push('8');
+            }
+            KeyCode::Digit9 => {
+                target.push('9');
+            }
+            KeyCode::Space => {
+                target.push(' ');
+            }
             _ => {}
         }
     }

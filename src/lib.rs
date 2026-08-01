@@ -41,7 +41,10 @@ pub fn main() {
                 .run_if(in_state(GameState::Login)),
         )
         // Game scene
-        .add_systems(OnEnter(GameState::Playing), (cube::setup, camera::setup, hud::setup))
+        .add_systems(
+            OnEnter(GameState::Playing),
+            (cube::setup, camera::setup, hud::setup),
+        )
         .add_systems(
             Update,
             (
