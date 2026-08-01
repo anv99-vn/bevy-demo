@@ -14,9 +14,9 @@ pub fn spawn(parent: &mut ChildBuilder) {
     parent
         .spawn((
             Node {
-                width: Val::Px(90.0),
-                height: Val::Px(28.0),
-                padding: UiRect::axes(Val::Px(12.0), Val::Px(4.0)),
+                width: Val::Px(110.0),
+                height: Val::Px(34.0),
+                padding: UiRect::axes(Val::Px(16.0), Val::Px(6.0)),
                 border: UiRect::all(Val::Px(2.0)),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
@@ -29,7 +29,7 @@ pub fn spawn(parent: &mut ChildBuilder) {
             SettingsButton,
         ))
         .with_children(|parent| {
-            parent.spawn(Text::new("Settings"));
+            parent.spawn((Text::new("Settings"), TextColor(Color::WHITE)));
         });
 }
 
