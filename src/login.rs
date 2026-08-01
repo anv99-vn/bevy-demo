@@ -267,49 +267,6 @@ pub fn ime_input_system(
     }
 }
 
-fn key_to_char(key: &KeyCode) -> Option<char> {
-    match key {
-        KeyCode::KeyA => Some('a'),
-        KeyCode::KeyB => Some('b'),
-        KeyCode::KeyC => Some('c'),
-        KeyCode::KeyD => Some('d'),
-        KeyCode::KeyE => Some('e'),
-        KeyCode::KeyF => Some('f'),
-        KeyCode::KeyG => Some('g'),
-        KeyCode::KeyH => Some('h'),
-        KeyCode::KeyI => Some('i'),
-        KeyCode::KeyJ => Some('j'),
-        KeyCode::KeyK => Some('k'),
-        KeyCode::KeyL => Some('l'),
-        KeyCode::KeyM => Some('m'),
-        KeyCode::KeyN => Some('n'),
-        KeyCode::KeyO => Some('o'),
-        KeyCode::KeyP => Some('p'),
-        KeyCode::KeyQ => Some('q'),
-        KeyCode::KeyR => Some('r'),
-        KeyCode::KeyS => Some('s'),
-        KeyCode::KeyT => Some('t'),
-        KeyCode::KeyU => Some('u'),
-        KeyCode::KeyV => Some('v'),
-        KeyCode::KeyW => Some('w'),
-        KeyCode::KeyX => Some('x'),
-        KeyCode::KeyY => Some('y'),
-        KeyCode::KeyZ => Some('z'),
-        KeyCode::Digit0 => Some('0'),
-        KeyCode::Digit1 => Some('1'),
-        KeyCode::Digit2 => Some('2'),
-        KeyCode::Digit3 => Some('3'),
-        KeyCode::Digit4 => Some('4'),
-        KeyCode::Digit5 => Some('5'),
-        KeyCode::Digit6 => Some('6'),
-        KeyCode::Digit7 => Some('7'),
-        KeyCode::Digit8 => Some('8'),
-        KeyCode::Digit9 => Some('9'),
-        KeyCode::Space => Some(' '),
-        _ => None,
-    }
-}
-
 #[allow(clippy::too_many_arguments)]
 pub fn text_input_system(
     keys: Res<ButtonInput<KeyCode>>,
@@ -339,15 +296,16 @@ pub fn text_input_system(
         &mut values.password
     };
 
-    // Determine the set of "actionable" keys currently relevant: Backspace
-    // (for deletion) plus any mappable character key.
-    let is_actionable = |key: &KeyCode| *key == KeyCode::Backspace || key_to_char(key).is_some();
+    // Only Backspace is handled here. Character input comes exclusively from
+    // `ime_input_system` via `Ime::Commit` (IME is enabled on the window), so
+    // handling character keys here too would insert each letter twice.
+    let is_backspace = |key: &KeyCode| *key == KeyCode::Backspace;
 
     // Detect fresh presses this frame -> apply once and seed the repeat timer.
     let just_pressed: Vec<KeyCode> = keys
         .get_just_pressed()
         .copied()
-        .filter(is_actionable)
+        .filter(is_backspace)
         .collect();
 
     let mut changed = false;
@@ -416,15 +374,8 @@ pub fn text_input_system(
 }
 
 fn apply_key(key: &KeyCode, target: &mut String) {
-    match key {
-        KeyCode::Backspace => {
-            target.pop();
-        }
-        k => {
-            if let Some(c) = key_to_char(k) {
-                target.push(c);
-            }
-        }
+    if *key == KeyCode::Backspace {
+        target.pop();
     }
 }
 
