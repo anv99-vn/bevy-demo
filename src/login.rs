@@ -196,7 +196,7 @@ pub fn text_input_system(
     mut values: ResMut<InputValues>,
     focus: Res<InputFocus>,
     mut username_q: Query<&mut Text, With<UsernameText>>,
-    mut password_q: Query<&mut Text, With<PasswordText>>,
+    mut password_q: Query<&mut Text, (With<PasswordText>, Without<UsernameText>)>,
 ) {
     if !focus.username && !focus.password {
         return;
