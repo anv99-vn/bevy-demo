@@ -30,9 +30,9 @@ pub fn setup(mut commands: Commands, settings: Res<CameraSettings>) {
         .spawn(Node {
             position_type: PositionType::Absolute,
             top: Val::Px(10.0),
-            left: Val::Px(10.0),
+            right: Val::Px(10.0),
             flex_direction: FlexDirection::Column,
-            align_items: AlignItems::FlexStart,
+            align_items: AlignItems::FlexEnd,
             row_gap: Val::Px(4.0),
             ..default()
         })

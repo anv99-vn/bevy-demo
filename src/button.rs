@@ -2,10 +2,10 @@ use bevy::prelude::*;
 
 use crate::camera::BlocksCameraRotation;
 
-const BUTTON_BG: Color = Color::srgb(0.2, 0.2, 0.2);
-const BUTTON_HOVER: Color = Color::srgb(0.31, 0.31, 0.31);
-const BUTTON_PRESSED: Color = Color::srgb(0.25, 0.66, 0.94);
-const BUTTON_BORDER: Color = Color::srgb(0.5, 0.5, 0.5);
+const BUTTON_BG: Color = Color::srgb(0.2, 0.45, 0.85);
+const BUTTON_HOVER: Color = Color::srgb(0.3, 0.55, 0.95);
+const BUTTON_PRESSED: Color = Color::srgb(0.12, 0.32, 0.7);
+const BUTTON_BORDER: Color = Color::srgb(0.7, 0.85, 1.0);
 
 #[derive(Component)]
 pub struct SettingsButton;
@@ -17,7 +17,7 @@ pub fn spawn(parent: &mut ChildBuilder) {
                 width: Val::Px(90.0),
                 height: Val::Px(28.0),
                 padding: UiRect::axes(Val::Px(12.0), Val::Px(4.0)),
-                border: UiRect::all(Val::Px(1.0)),
+                border: UiRect::all(Val::Px(2.0)),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 ..default()
