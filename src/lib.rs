@@ -17,5 +17,6 @@ pub fn main() {
         }))
         .add_systems(Startup, (cube::setup, camera::setup))
         .add_systems(Update, (cube::rotate, camera::update))
+        .init_resource::<camera::CameraSettings>()
         .run();
 }

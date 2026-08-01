@@ -1,6 +1,17 @@
 use bevy::input::mouse::{MouseMotion, MouseWheel};
 use bevy::prelude::*;
 
+#[derive(Resource)]
+pub struct CameraSettings {
+    pub sensitivity: f32,
+}
+
+impl Default for CameraSettings {
+    fn default() -> Self {
+        Self { sensitivity: 0.01 }
+    }
+}
+
 #[derive(Component)]
 pub struct OrbitCamera {
     yaw: f32,
@@ -27,13 +38,25 @@ pub fn update(
     mouse: Res<ButtonInput<MouseButton>>,
     mut scroll: EventReader<MouseWheel>,
     mut motion: EventReader<MouseMotion>,
+    keys: Res<ButtonInput<KeyCode>>,
+    mut settings: ResMut<CameraSettings>,
 ) {
+    if keys.just_pressed(KeyCode::Equal) {
+        settings.sensitivity = (settings.sensitivity + 0.005).min(0.1);
+        println!("Mouse sensitivity: {:.3}", settings.sensitivity);
+    }
+    if keys.just_pressed(KeyCode::Minus) {
+        settings.sensitivity = (settings.sensitivity - 0.005).max(0.001);
+        println!("Mouse sensitivity: {:.3}", settings.sensitivity);
+    }
+
+    let sens = settings.sensitivity;
     for (mut transform, mut cam) in &mut q {
         let drag = mouse.pressed(MouseButton::Left);
         for ev in motion.read() {
             if drag {
-                cam.yaw -= ev.delta.x * 0.01;
-                cam.pitch = (cam.pitch - ev.delta.y * 0.01).clamp(-1.4, 1.4);
+                cam.yaw -= ev.delta.x * sens;
+                cam.pitch = (cam.pitch - ev.delta.y * sens).clamp(-1.4, 1.4);
             }
         }
 
