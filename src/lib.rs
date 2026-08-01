@@ -21,6 +21,7 @@ pub fn main() {
             primary_window: Some(Window {
                 title: "Bevy 3D Demo".into(),
                 resolution: (800.0_f32, 600.0_f32).into(),
+                ime_enabled: true,
                 ..default()
             }),
             ..default()
@@ -34,10 +35,10 @@ pub fn main() {
             (
                 login::focus_input_system,
                 login::text_input_system,
+                login::ime_input_system,
                 login::style_input_fields,
                 login::login_button_system,
                 login::style_login_button,
-                login::log_input_keys,
             )
                 .run_if(in_state(GameState::Login)),
         )

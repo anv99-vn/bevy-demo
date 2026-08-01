@@ -1,5 +1,6 @@
 ﻿use bevy::input::keyboard::KeyCode;
 use bevy::prelude::*;
+use bevy::window::Ime;
 
 use crate::camera::BlocksCameraRotation;
 use crate::GameState;
@@ -46,9 +47,16 @@ pub(crate) struct InputValues {
     pub password: String,
 }
 
+#[derive(Resource, Default)]
+pub(crate) struct ImeState {
+    /// True while an IME (e.g. Unikey) is composing text in the preedit buffer.
+    pub composing: bool,
+}
+
 pub fn setup(mut commands: Commands) {
     commands.insert_resource(InputFocus::default());
     commands.insert_resource(InputValues::default());
+    commands.insert_resource(ImeState::default());
 
     commands.spawn((Camera2d, LoginCamera));
 
@@ -191,9 +199,51 @@ pub fn focus_input_system(
     }
 }
 
-pub fn log_input_keys(keys: Res<ButtonInput<KeyCode>>) {
-    for key in keys.get_just_pressed() {
-        info!("Key pressed: {:?}", key);
+pub fn ime_input_system(
+    mut events: EventReader<Ime>,
+    mut ime_state: ResMut<ImeState>,
+    focus: Res<InputFocus>,
+    mut values: ResMut<InputValues>,
+    mut username_q: Query<&mut Text, With<UsernameText>>,
+    mut password_q: Query<&mut Text, (With<PasswordText>, Without<UsernameText>)>,
+) {
+    if !focus.username && !focus.password {
+        events.clear();
+        return;
+    }
+
+    let target: &mut String = if focus.username {
+        &mut values.username
+    } else {
+        &mut values.password
+    };
+
+    let mut changed = false;
+    for event in events.read() {
+        match event {
+            Ime::Commit { value, .. } => {
+                target.push_str(value);
+                ime_state.composing = false;
+                changed = true;
+            }
+            Ime::Preedit { value, .. } => {
+                ime_state.composing = !value.is_empty();
+            }
+            _ => {}
+        }
+    }
+
+    if !changed {
+        return;
+    }
+    if focus.username {
+        for mut text in &mut username_q {
+            text.0 = values.username.clone();
+        }
+    } else {
+        for mut text in &mut password_q {
+            text.0 = values.password.clone();
+        }
     }
 }
 
@@ -242,12 +292,19 @@ fn key_to_char(key: &KeyCode) -> Option<char> {
 
 pub fn text_input_system(
     keys: Res<ButtonInput<KeyCode>>,
+    ime_state: Res<ImeState>,
     mut values: ResMut<InputValues>,
     focus: Res<InputFocus>,
     mut username_q: Query<&mut Text, With<UsernameText>>,
     mut password_q: Query<&mut Text, (With<PasswordText>, Without<UsernameText>)>,
 ) {
     if !focus.username && !focus.password {
+        return;
+    }
+    // While a system IME (Unikey, etc.) is composing text, raw key events are
+    // synthetic noise (e.g. `Unidentified` + repeated `Backspace`); let the
+    // IME commit be the source of truth via `ime_input_system`.
+    if ime_state.composing {
         return;
     }
 
