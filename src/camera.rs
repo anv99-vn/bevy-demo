@@ -28,7 +28,7 @@ pub fn update(
     mut scroll: EventReader<MouseWheel>,
     mut motion: EventReader<MouseMotion>,
 ) {
-    for (transform, cam) in &mut q {
+    for (mut transform, mut cam) in &mut q {
         let drag = mouse.pressed(MouseButton::Left);
         for ev in motion.read() {
             if drag {
