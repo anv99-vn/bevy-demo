@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy::ui::RelativeCursorPosition;
 
+use crate::button::{self, SettingsButton};
 use crate::camera::{BlocksCameraRotation, CameraSettings};
 
 const MIN_SENSITIVITY: f32 = 0.001;
@@ -14,9 +15,6 @@ pub struct SensitivitySlider;
 
 #[derive(Component)]
 pub struct SensitivityFill;
-
-#[derive(Component)]
-pub struct SettingsButton;
 
 #[derive(Component)]
 pub struct SensitivityPanel;
@@ -39,25 +37,7 @@ pub fn setup(mut commands: Commands, settings: Res<CameraSettings>) {
             ..default()
         })
         .with_children(|parent| {
-            parent
-                .spawn((
-                    Node {
-                        width: Val::Px(90.0),
-                        height: Val::Px(26.0),
-                        border: UiRect::all(Val::Px(1.0)),
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                    BorderColor(Color::WHITE),
-                    BackgroundColor(Color::srgb(0.2, 0.2, 0.2)),
-                    Interaction::default(),
-                    BlocksCameraRotation,
-                    SettingsButton,
-                ))
-                .with_children(|parent| {
-                    parent.spawn(Text::new("Settings"));
-                });
+            button::spawn(parent);
             parent
                 .spawn((
                     Node {
